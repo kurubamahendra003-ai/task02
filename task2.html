@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Segmentation - KMeans</title>
+</head>
+<body>
+    <h2>Customer Segmentation (K-Means Clustering)</h2>
+
+    <button onclick="runKMeans()">Run Clustering</button>
+
+    <h3>Clusters:</h3>
+    <pre id="output"></pre>
+
+    <script>
+        // Sample Mall Customers dataset: [Annual Income, Spending Score]
+        const data = [
+            [15, 39], [16, 81], [17, 6], [18, 77], [19, 40],
+            [20, 76], [21, 6], [23, 94], [24, 3], [25, 72],
+            [28, 14], [30, 99], [33, 4], [35, 92], [37, 13]
+        ];
+
+        let k = 3; // number of clusters
+
+        function distance(a, b) {
+            return Math.sqrt(
+                Math.pow(a[0] - b[0], 2) +
+                Math.pow(a[1] - b[1], 2)
+            );
+        }
+
+        function initializeCentroids(data, k) {
+            let centroids = [];
+            for (let i = 0; i < k; i++) {
+                centroids.push(data[Math.floor(Math.random() * data.length)]);
+            }
+            return centroids;
+        }
+
+        function assignClusters(data, centroids) {
+            let clusters = new Array(data.length);
+
+            for (let i = 0; i < data.length; i++) {
+                let minDist = Infinity;
+                let clusterIndex = 0;
+
+                for (let j = 0; j < centroids.length; j++) {
+                    let dist = distance(data[i], centroids[j]);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        clusterIndex = j;
+                    }
+                }
+                clusters[i] = clusterIndex;
+            }
+            return clusters;
+        }
+
+        function updateCentroids(data, clusters, k) {
+            let newCentroids = Array.from({ length: k }, () => [0, 0]);
+            let counts = new Array(k).fill(0);
+
+            for (let i = 0; i < data.length; i++) {
+                let cluster = clusters[i];
+                newCentroids[cluster][0] += data[i][0];
+                newCentroids[cluster][1] += data[i][1];
+                counts[cluster]++;
+            }
+
+            for (let i = 0; i < k; i++) {
+                if (counts[i] !== 0) {
+                    newCentroids[i][0] /= counts[i];
+                    newCentroids[i][1] /= counts[i];
+                }
+            }
+
+            return newCentroids;
+        }
+
+        function kmeans(data, k, maxIterations = 100) {
+            let centroids = initializeCentroids(data, k);
+            let clusters;
+
+            for (let i = 0; i < maxIterations; i++) {
+                clusters = assignClusters(data, centroids);
+                let newCentroids = updateCentroids(data, clusters, k);
+
+                if (JSON.stringify(newCentroids) === JSON.stringify(centroids)) {
+                    break;
+                }
+                centroids = newCentroids;
+            }
+
+            return { clusters, centroids };
+        }
+
+        function runKMeans() {
+            let result = kmeans(data, k);
+            let output = "";
+
+            for (let i = 0; i < result.clusters.length; i++) {
+                output += "Customer " + (i + 1) +
+                          " -> Cluster " + result.clusters[i] + "\n";
+            }
+
+            output += "\nCentroids:\n";
+            result.centroids.forEach((c, i) => {
+                output += "Cluster " + i + ": [" + c[0].toFixed(2) + ", " + c[1].toFixed(2) + "]\n";
+            });
+
+            document.getElementById("output").textContent = output;
+        }
+    </script>
+</body>
+</html>
+
+
+
